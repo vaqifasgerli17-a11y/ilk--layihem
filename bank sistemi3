@@ -1,0 +1,164 @@
+#include <iostream>
+#include <vector>
+#include <fstream>
+using namespace std;
+
+class Hesab {
+private:
+    int id;
+    string sahib;
+    double balans;
+    int pin;
+    bool blok;
+
+public:
+    Hesab(int _id, string _sahib, double _balans, int _pin) {
+        id = _id;
+        sahib = _sahib;
+        balans = _balans;
+        pin = _pin;
+        blok = false;
+    }
+
+    int getId() { return id; }
+    bool bloklanib() { return blok; }
+
+    bool yoxlaPin(int daxilPin) {
+        return daxilPin == pin;
+    }
+
+    void blokla() {
+        blok = true;
+        cout << "Hesab bloklandi!\n";
+    }
+
+    void balansGoster() {
+        cout << "Balans: " << balans << " AZN\n";
+    }
+
+    void pulArtir(double m) {
+        if (m > 0) balans += m;
+    }
+
+    void pulAzalt(double m) {
+        if (m <= balans) balans -= m;
+        else cout << "Balans kifayet deyil!\n";
+    }
+
+    // fayla yaz
+    void faylaYaz(ofstream& f) {
+        f << id << " " << sahib << " " << balans << " " << pin << " " << blok << endl;
+    }
+};
+
+////////////////////////////////////////////////////
+
+class ATM {
+private:
+    vector<Hesab> hesablar;
+    int aktivIndex = -1;
+
+public:
+
+    void hesabElaveEt(Hesab h) {
+        hesablar.push_back(h);
+    }
+
+    bool Login(int id, int pin) {
+
+        for (int i = 0; i < hesablar.size(); i++) {
+
+            if (hesablar[i].getId() == id) {
+
+                if (hesablar[i].bloklanib()) {
+                    cout << "Bu hesab bloklanib!\n";
+                    return false;
+                }
+
+                for (int cehd = 0; cehd < 3; cehd++) {
+
+                    if (hesablar[i].yoxlaPin(pin)) {
+                        aktivIndex = i;
+                        cout << "Giris ugurludur!\n";
+                        return true;
+                    }
+                    else {
+                        cout << "Sehv PIN!\n";
+                        if (cehd < 2) {
+                            cout << "Tekrar PIN daxil et: ";
+                            cin >> pin;
+                        }
+                    }
+                }
+
+                hesablar[i].blokla();
+                return false;
+            }
+        }
+
+        cout << "ID tapilmadi!\n";
+        return false;
+    }
+
+    void BalansGoster() {
+        if (aktivIndex != -1)
+            hesablar[aktivIndex].balansGoster();
+    }
+
+    void PulArtir(double m) {
+        if (aktivIndex != -1)
+            hesablar[aktivIndex].pulArtir(m);
+    }
+
+    void PulAzalt(double m) {
+        if (aktivIndex != -1)
+            hesablar[aktivIndex].pulAzalt(m);
+    }
+};
+
+////////////////////////////////////////////////////
+
+int main() {
+
+    ATM atm;
+
+    // test hesablar
+    atm.hesabElaveEt(Hesab(1001, "Ali", 500, 1234));
+    atm.hesabElaveEt(Hesab(1002, "Veli", 800, 4321));
+
+    int id, pin;
+
+    cout << "ID daxil et: ";
+    cin >> id;
+    cout << "PIN daxil et: ";
+    cin >> pin;
+
+    if (atm.Login(id, pin)) {
+
+        int secim;
+        do {
+            cout << "\n1.Balans\n2.Pul cixar\n3.Pul yatir\n0.Cixis\nSecim: ";
+            cin >> secim;
+
+            if (secim == 1)
+                atm.BalansGoster();
+
+            else if (secim == 2) {
+                double m;
+                cout << "Mebleg: ";
+                cin >> m;
+                atm.PulAzalt(m);
+            }
+
+            else if (secim == 3) {
+                double m;
+                cout << "Mebleg: ";
+                cin >> m;
+                atm.PulArtir(m);
+            }
+
+        } while (secim != 0);
+    }
+
+    return 0;
+}
