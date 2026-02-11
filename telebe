@@ -1,0 +1,164 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <fstream>
+
+using namespace std;
+
+class Telebe {
+private:
+    int id;
+    string ad;
+    string ixtisas;
+    double ortabal;
+
+public:
+    Telebe() {}
+
+    Telebe(int _id, string _ad, string _ixtisas, double _ortabal) {
+        id = _id;
+        ad = _ad;
+        ixtisas = _ixtisas;
+        ortabal = _ortabal;
+    }
+
+    int getId() const { return id; }
+    double getOrtaBal() const { return ortabal; }
+
+    void Goster() const {
+        cout << "ID: " << id
+             << " | Ad: " << ad
+             << " | Ixtisas: " << ixtisas
+             << " | Orta bal: " << ortabal << endl;
+    }
+
+    void FaylaYaz(ofstream& f) const {
+        f << id << endl;
+        f << ad << endl;
+        f << ixtisas << endl;
+        f << ortabal << endl;
+    }
+
+    void FayldanOxu(ifstream& f) {
+        f >> id;
+        f.ignore();
+        getline(f, ad);
+        getline(f, ixtisas);
+        f >> ortabal;
+        f.ignore();
+    }
+};
+
+class Universitet {
+private:
+    vector<Telebe> telebeler;
+
+public:
+    void TelebeElaveEt() {
+        int id;
+        string ad, ixtisas;
+        double ortabal;
+
+        cout << "ID: ";
+        cin >> id;
+        cin.ignore();
+
+        cout << "Ad: ";
+        getline(cin, ad);
+
+        cout << "Ixtisas: ";
+        getline(cin, ixtisas);
+
+        cout << "Orta bal: ";
+        cin >> ortabal;
+
+        telebeler.push_back(Telebe(id, ad, ixtisas, ortabal));
+    }
+
+    void TelebeleriGoster() const {
+        if (telebeler.empty()) {
+            cout << "Telebe yoxdur!\n";
+            return;
+        }
+
+        for (const auto& t : telebeler)
+            t.Goster();
+    }
+
+    void IdIleAxtar() const {
+        int id;
+        cout << "Axtarilacaq ID: ";
+        cin >> id;
+
+        for (const auto& t : telebeler) {
+            if (t.getId() == id) {
+                t.Goster();
+                return;
+            }
+        }
+
+        cout << "Tapilmadi!\n";
+    }
+
+    void EnYuksekOrtaBal() const {
+        if (telebeler.empty()) {
+            cout << "Telebe yoxdur!\n";
+            return;
+        }
+
+        int maxIndex = 0;
+        for (int i = 1; i < telebeler.size(); i++) {
+            if (telebeler[i].getOrtaBal() > telebeler[maxIndex].getOrtaBal())
+                maxIndex = i;
+        }
+
+        cout << "En yuksek ortaballi telebe:\n";
+        telebeler[maxIndex].Goster();
+    }
+
+    void FaylaYaz() const {
+        ofstream f("telebeler.txt");
+        for (const auto& t : telebeler)
+            t.FaylaYaz(f);
+        cout << "Fayla yazildi.\n";
+    }
+
+    void FayldanOxu() {
+        ifstream f("telebeler.txt");
+        if (!f) return;
+
+        telebeler.clear();
+
+        while (f.peek() != EOF) {
+            Telebe t;
+            t.FayldanOxu(f);
+            telebeler.push_back(t);
+        }
+    }
+};
+
+int main() {
+    Universitet uni;
+    uni.FayldanOxu();
+
+    int secim;
+    do {
+        cout << "\n1. Telebe elave et\n";
+        cout << "2. Telebeleri goster\n";
+        cout << "3. ID ile axtar\n";
+        cout << "4. En yuksek ortabal\n";
+        cout << "5. Fayla yaz\n";
+        cout << "0. Cixis\n";
+        cout << "Secim: ";
+        cin >> secim;
+
+        switch (secim) {
+            case 1: uni.TelebeElaveEt(); break;
+            case 2: uni.TelebeleriGoster(); break;
+            case 3: uni.IdIleAxtar(); break;
+            case 4: uni.EnYuksekOrtaBal(); break;
+            case 5: uni.FaylaYaz(); break;
+        }
+
+    } while (secim != 0);
+}
