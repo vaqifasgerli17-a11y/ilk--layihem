@@ -1,0 +1,187 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <fstream>
+#include <iomanip>
+#include <algorithm>
+#include <limits>
+
+using namespace std;
+
+class Mehsul {
+private:
+    int id;
+    string ad;
+    double qiymet;
+    int say;
+
+public:
+    Mehsul(int id = 0, string ad = "", double qiymet = 0.0, int say = 0) {
+        this->id = id;
+        this->ad = ad;
+        this->qiymet = qiymet;
+        this->say = say;
+    }
+
+    int getid() const { return id; }
+    double getqiymet() const { return qiymet; }
+    int getsay() const { return say; }
+
+    void Azalt(int miqdar) {
+        if (miqdar <= say)
+            say -= miqdar;
+        else
+            cout << "Stok kifayet deyil!\n";
+    }
+
+    void MelumatAl() {
+        cout << "Mehsulun id: ";
+        cin >> id;
+        cin.ignore();
+
+        cout << "Mehsulun adi: ";
+        getline(cin, ad);
+
+        cout << "Qiymet: ";
+        cin >> qiymet;
+
+        cout << "Say: ";
+        cin >> say;
+    }
+
+    void MelumatGoster() const {
+        cout << left << setw(10) << id
+            << setw(20) << ad
+            << setw(10) << qiymet
+            << setw(10) << say << endl;
+    }
+
+    void FaylaYaz(ofstream& file) const {
+        file << id << endl;
+        file << ad << endl;
+        file << qiymet << endl;
+        file << say << endl;
+    }
+
+    bool FayldanOxu(ifstream& file) {
+        if (!(file >> id)) return false;
+        file.ignore();
+        getline(file, ad);
+        file >> qiymet;
+        file >> say;
+        file.ignore();
+        return true;
+    }
+};
+
+class Magaza {
+private:
+    vector<Mehsul> mehsullar;
+
+public:
+    void MehsulElaveEt() {
+        Mehsul m;
+        m.MelumatAl();
+        mehsullar.push_back(m);
+    }
+
+    void MehsullariGoster() const {
+        cout << "\nID       AD                 QIYMET   SAY\n";
+        cout << "-------------------------------------------\n";
+        for (const auto& m : mehsullar)
+            m.MelumatGoster();
+    }
+
+    void Axtar(int id) const {
+        for (const auto& m : mehsullar)
+            if (m.getid() == id) {
+                m.MelumatGoster();
+                return;
+            }
+        cout << "Mehsul tapilmadi!\n";
+    }
+
+    void Sat(int id, int miqdar) {
+        for (auto& m : mehsullar)
+            if (m.getid() == id) {
+                m.Azalt(miqdar);
+                return;
+            }
+        cout << "Mehsul tapilmadi!\n";
+    }
+
+    void Sirala() {
+        sort(mehsullar.begin(), mehsullar.end(),
+            [](const Mehsul& a, const Mehsul& b) {
+                return a.getqiymet() < b.getqiymet();
+            });
+    }
+
+    void FaylaYaz(const string& filename) const {
+        ofstream file(filename);
+        for (const auto& m : mehsullar)
+            m.FaylaYaz(file);
+    }
+
+    void FayldanOxu(const string& filename) {
+        ifstream file(filename);
+        if (!file) return;
+
+        mehsullar.clear();
+        while (true) {
+            Mehsul m;
+            if (!m.FayldanOxu(file)) break;
+            mehsullar.push_back(m);
+        }
+    }
+};
+
+int main() {
+    Magaza magaza;
+    magaza.FayldanOxu("mehsullar.txt");
+
+    int secim;
+    do {
+        cout << "\n1. Mehsul elave et\n";
+        cout << "2. Mehsullari goster\n";
+        cout << "3. Mehsul axtar\n";
+        cout << "4. Mehsul sat\n";
+        cout << "5. Qiymete gore sirala\n";
+        cout << "6. Cixis\n";
+        cout << "Secim: ";
+        cin >> secim;
+
+        switch (secim) {
+        case 1:
+            magaza.MehsulElaveEt();
+            break;
+        case 2:
+            magaza.MehsullariGoster();
+            break;
+        case 3: {
+            int id;
+            cout << "ID daxil et: ";
+            cin >> id;
+            magaza.Axtar(id);
+            break;
+        }
+        case 4: {
+            int id, miqdar;
+            cout << "ID: ";
+            cin >> id;
+            cout << "Miqdar: ";
+            cin >> miqdar;
+            magaza.Sat(id, miqdar);
+            break;
+        }
+        case 5:
+            magaza.Sirala();
+            cout << "Siralanma tamamlandi\n";
+            break;
+        }
+
+    } while (secim != 6);
+
+    magaza.FaylaYaz("mehsullar.txt");
+    return 0;
+}
