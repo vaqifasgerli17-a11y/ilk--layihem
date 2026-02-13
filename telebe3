@@ -1,0 +1,262 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <fstream>
+#include <iomanip>
+#include <algorithm>
+#include <limits>
+#include <cmath> // abs üçün
+
+using namespace std;
+
+class Telebe {
+private:
+    string ad;
+    string soyad;
+    int id;
+    double ortalama;
+    float qurup;
+
+public:
+    Telebe(string ad = "", string soyad = "", int id = 0, double ortalama = 0.0, float qurup = 0.0) {
+        this->ad = ad;
+        this->soyad = soyad;
+        this->id = id;
+        this->ortalama = ortalama;
+        this->qurup = qurup;
+    }
+
+    int getId() const { return id; }
+    double getOrtalama() const { return ortalama; }
+    float getQurup() const { return qurup; }
+
+    void melumatal() {
+        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // öncə buffer təmizlənir
+        cout << "Telebenin adi: ";
+        getline(cin, ad);
+        cout << "Telebenin soyadi: ";
+        getline(cin, soyad);
+        cout << "Telebenin ID-si: ";
+        cin >> id;
+        cout << "Telebenin qurupu: ";
+        cin >> qurup;
+        cout << "Telebenin ortalamasi: ";
+        cin >> ortalama;
+    }
+
+    void melumatgoster() const {
+        cout << "Ad: " << left << setw(15) << ad
+            << "Soyad: " << left << setw(15) << soyad
+            << "ID: " << left << setw(5) << id
+            << "Qrup: " << left << setw(5) << qurup
+            << "Ortalama: " << left << setw(5) << ortalama
+            << endl;
+    }
+
+    void FaylaYaz(ofstream& file) const {
+        file << ad << endl;
+        file << soyad << endl;
+        file << id << endl;
+        file << qurup << endl;
+        file << ortalama << endl;
+    }
+
+    bool FayldanOxu(ifstream& file) {
+        if (!getline(file, ad)) return false;
+        if (!getline(file, soyad)) return false;
+        if (!(file >> id >> qurup >> ortalama)) return false;
+        file.ignore(numeric_limits<streamsize>::max(), '\n');
+        return true;
+    }
+};
+
+class Universitet {
+private:
+    vector<Telebe> telebeler;
+
+public:
+    void TelebeElaveEt(const Telebe& t) {
+        telebeler.push_back(t);
+    }
+
+    void Goster() const {
+        if (telebeler.empty()) {
+            cout << "Heç bir telebe yoxdur.\n";
+            return;
+        }
+        for (const auto& t : telebeler) {
+            t.melumatgoster();
+        }
+    }
+
+    void Idileaxtar(int id) const {
+        bool found = false;
+        for (const auto& t : telebeler) {
+            if (t.getId() == id) {
+                t.melumatgoster();
+                found = true;
+                break;
+            }
+        }
+        if (!found) cout << "Telebe tapilmadi.\n";
+    }
+
+    bool IdMovcuddur(int id) const {
+        for (const auto& t : telebeler) {
+            if (t.getId() == id) return true;
+        }
+        return false;
+    }
+
+    void Sil(int id) {
+        auto it = remove_if(telebeler.begin(), telebeler.end(),
+            [id](const Telebe& t) { return t.getId() == id; });
+        if (it != telebeler.end()) {
+            telebeler.erase(it, telebeler.end());
+            cout << "Telebe silindi.\n";
+        }
+        else {
+            cout << "Belə ID yoxdur.\n";
+        }
+    }
+
+    void OrtalamaAraligindaAxtar(double alt, double ust) const {
+        bool found = false;
+        for (const auto& t : telebeler) {
+            if (t.getOrtalama() >= alt && t.getOrtalama() <= ust) {
+                t.melumatgoster();
+                found = true;
+            }
+        }
+        if (!found) cout << "Heç bir telebe tapilmadi.\n";
+    }
+
+    void QurupAxtar(float qurup) const {
+        bool found = false;
+        for (const auto& t : telebeler) {
+            if (fabs(t.getQurup() - qurup) < 0.001f) {
+                t.melumatgoster();
+                found = true;
+            }
+        }
+        if (!found) cout << "Heç bir telebe tapilmadi.\n";
+    }
+
+    void EnyuksekOrtalama() const {
+        if (telebeler.empty()) {
+            cout << "Telebe yoxdur.\n";
+            return;
+        }
+        double max = telebeler[0].getOrtalama();
+        for (const auto& t : telebeler)
+            if (t.getOrtalama() > max) max = t.getOrtalama();
+
+        cout << "En yuksek ortalamali telebeler:\n";
+        for (const auto& t : telebeler)
+            if (t.getOrtalama() == max)
+                t.melumatgoster();
+    }
+
+    void faylaYaz(const string& filename) const {
+        ofstream file(filename);
+        for (const auto& t : telebeler)
+            t.FaylaYaz(file);
+        cout << "Fayla yazildi.\n";
+    }
+
+    void fayldanOxu(const string& filename) {
+        ifstream file(filename);
+        if (!file) {
+            cout << "Fayl acilamadi.\n";
+            return;
+        }
+        telebeler.clear();
+        Telebe temp;
+        while (temp.FayldanOxu(file)) {
+            telebeler.push_back(temp);
+        }
+        cout << "Fayldan oxundu.\n";
+    }
+};
+
+int main() {
+    Universitet uni;
+    uni.fayldanOxu("telebeler.txt");
+
+    int secim;
+    do {
+        cout << "\n===== MENYU =====\n";
+        cout << "1. Telebe elave et\n";
+        cout << "2. Telebeleri goster\n";
+        cout << "3. ID ile axtar\n";
+        cout << "4. Ortalama araliginda axtar\n";
+        cout << "5. Qrup axtar\n";
+        cout << "6. Telebeni sil\n";
+        cout << "7. En yuksek ortalama\n";
+        cout << "8. Fayla yaz\n";
+        cout << "9. Fayldan oxu\n";
+        cout << "0. Cixis\n";
+        cout << "Secim: ";
+        cin >> secim;
+
+        switch (secim) {
+        case 1: {
+            Telebe t;
+            t.melumatal();
+            if (uni.IdMovcuddur(t.getId()))
+                cout << "Bu ID artiq movcuddur!\n";
+            else
+                uni.TelebeElaveEt(t);
+            break;
+        }
+        case 2:
+            uni.Goster();
+            break;
+        case 3: {
+            int id;
+            cout << "ID daxil edin: ";
+            cin >> id;
+            uni.Idileaxtar(id);
+            break;
+        }
+        case 4: {
+            double alt, ust;
+            cout << "Ortalama araligini daxil edin (alt ust): ";
+            cin >> alt >> ust;
+            uni.OrtalamaAraligindaAxtar(alt, ust);
+            break;
+        }
+        case 5: {
+            float qurup;
+            cout << "Qurupu daxil edin: ";
+            cin >> qurup;
+            uni.QurupAxtar(qurup);
+            break;
+        }
+        case 6: {
+            int id;
+            cout << "Silmek istediyiniz ID: ";
+            cin >> id;
+            uni.Sil(id);
+            break;
+        }
+        case 7:
+            uni.EnyuksekOrtalama();
+            break;
+        case 8:
+            uni.faylaYaz("telebeler.txt");
+            break;
+        case 9:
+            uni.fayldanOxu("telebeler.txt");
+            break;
+        case 0:
+            cout << "Cixis...\n";
+            break;
+        default:
+            cout << "Yanlis secim! Tekrar cehd edin.\n";
+        }
+
+    } while (secim != 0);
+
+    return 0;
+}
