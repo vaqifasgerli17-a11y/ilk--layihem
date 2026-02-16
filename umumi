@@ -1,0 +1,123 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <fstream>
+#include <iomanip>
+#include <algorithm>
+#include <limits>
+#include <memory>
+using namespace std;
+
+// ======================================================
+// ===================== BANK SYSTEM =====================
+// ======================================================
+namespace BankSys {
+class Hesab {
+    int id; string sahib; double balans;
+public:
+    Hesab(int i=0,string s="",double b=0):id(i),sahib(s),balans(b){}
+    int getId()const{return id;} double getBalans()const{return balans;}
+    void melumatAl(){
+        cout<<"ID: ";cin>>id;cin.ignore(numeric_limits<streamsize>::max(),'\n');
+        cout<<"Ad: ";getline(cin,sahib);
+        cout<<"Balans: ";cin>>balans;
+    }
+    void goster()const{cout<<left<<setw(6)<<id<<setw(15)<<sahib<<setw(10)<<balans<<"\n";}
+    void artir(double m){if(m>0)balans+=m;}
+    void azalt(double m){if(m<=balans)balans-=m;else cout<<"Balans azdir\n";}
+};
+
+class Bank{
+    vector<Hesab> h;
+public:
+    void elave(){Hesab a;a.melumatAl();h.push_back(a);}    
+    void goster(){for(auto &x:h)x.goster();}
+};
+
+void run(){
+    Bank b; int s;
+    do{
+        cout<<"\nBANK\n1.Elave\n2.Goster\n0.Cixis\nSecim: ";cin>>s;
+        if(s==1)b.elave();
+        if(s==2)b.goster();
+    }while(s!=0);
+}
+}
+
+// ======================================================
+// ===================== ATM SYSTEM ======================
+// ======================================================
+namespace ATMSys {
+class Hesab{
+    int id,pin; double balans; bool blok=false;
+public:
+    Hesab(int i,int p,double b):id(i),pin(p),balans(b){}
+    bool login(int i,int p){ if(blok)return false; if(i==id&&p==pin)return true; return false; }
+    void goster(){cout<<"Balans: "<<balans<<" AZN\n";}
+};
+
+void run(){
+    Hesab h(1001,1234,500);
+    int id,p; cout<<"ID:";cin>>id;cout<<"PIN:";cin>>p;
+    if(h.login(id,p))h.goster(); else cout<<"Giris ugursuz\n";
+}
+}
+
+// ======================================================
+// =================== PAYMENT SYSTEM ====================
+// ======================================================
+namespace PaySys {
+class Payment{public:virtual void pay()=0;virtual~Payment(){} };
+class Cash:public Payment{double a;public:Cash(double x):a(x){}void pay(){cout<<a<<" AZN nagd odenildi\n";}};
+class Card:public Payment{double a;public:Card(double x):a(x){}void pay(){cout<<a<<" AZN kartla odenildi\n";}};
+
+void run(){
+    vector<unique_ptr<Payment>> p;
+    p.push_back(make_unique<Cash>(50));
+    p.push_back(make_unique<Card>(120));
+    for(auto &x:p)x->pay();
+}
+}
+
+// ======================================================
+// ===================== LIBRARY =========================
+// ======================================================
+namespace LibrarySys {
+class Book{string ad;public:Book(string a=""):ad(a){}void al(){cin.ignore();getline(cin,ad);}void goster(){cout<<ad<<"\n";}};
+void run(){vector<Book>b;int s;do{cout<<"1.Elave 2.Goster 0.Cixis:";cin>>s;if(s==1){Book k;k.al();b.push_back(k);}if(s==2)for(auto &x:b)x.goster();}while(s!=0);} }
+
+// ======================================================
+// ===================== SHOP ============================
+// ======================================================
+namespace ShopSys {
+class Mehsul{string ad;double q;public:Mehsul(string a="",double p=0):ad(a),q(p){}void goster(){cout<<ad<<" "<<q<<"\n";}};
+void run(){vector<Mehsul>m={{"Corek",1.2},{"Sut",2.4}};for(auto &x:m)x.goster();}
+}
+
+// ======================================================
+// ===================== COMPANY =========================
+// ======================================================
+namespace CompanySys {
+class Isci{string ad;double maas;public:Isci(string a,double m):ad(a),maas(m){}void goster(){cout<<ad<<" "<<maas<<"\n";}};
+void run(){vector<Isci>i={{"Ali",700},{"Veli",900}};for(auto &x:i)x.goster();}
+}
+
+// ======================================================
+// ===================== MAIN MENU =======================
+// ======================================================
+int main(){
+    int secim;
+    do{
+        cout<<"\n==== SUPER SYSTEM ====\n";
+        cout<<"1.Bank\n2.ATM\n3.Payment\n4.Library\n5.Shop\n6.Company\n0.Exit\nSecim: ";
+        cin>>secim;
+        switch(secim){
+            case 1:BankSys::run();break;
+            case 2:ATMSys::run();break;
+            case 3:PaySys::run();break;
+            case 4:LibrarySys::run();break;
+            case 5:ShopSys::run();break;
+            case 6:CompanySys::run();break;
+        }
+    }while(secim!=0);
+}
