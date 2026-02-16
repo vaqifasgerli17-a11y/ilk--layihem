@@ -1,0 +1,139 @@
+#include<iostream>
+#include<string>
+#include<vector>
+#include<algorithm>
+
+using namespace std;
+
+class Employee {
+protected:
+    int id;
+    string name;
+    double salary;
+
+public:
+    Employee(int id,string name,double salary)
+        :id(id),name(name),salary(salary){}
+
+    virtual double CalculateSalary()const = 0;
+    virtual void Show() const = 0;
+    virtual string GetDepartment()const = 0;
+
+    int GetId()const { return id; }
+    double GetSalary()const { return salary; }
+
+    virtual ~Employee(){}
+};
+
+class Developer : public Employee {
+    string language;
+public:
+    Developer(int id,string name,double salary,string lang)
+        :Employee(id,name,salary),language(lang){}
+
+    double CalculateSalary()const override {
+        return salary * 1.20;
+    }
+
+    void Show()const override {
+        cout<<"[Developer] "<<id<<" "<<name<<" "<<language
+            <<" Salary:"<<CalculateSalary()<<endl;
+    }
+
+    string GetDepartment()const override {
+        return "IT";
+    }
+};
+
+class Manager :public Employee{
+    int teamSize;
+
+public:
+    Manager(int id,string name,double salary,int team)
+        :Employee(id,name,salary),teamSize(team){}
+
+    double CalculateSalary()const override {
+        return salary * 1.50;
+    }
+
+    void Show()const override {
+        cout<<"[Manager] "<<id<<" "<<name<<" Team:"<<teamSize
+            <<" Salary:"<<CalculateSalary()<<endl;
+    }
+
+    string GetDepartment()const override {
+        return "Management";
+    }
+};
+
+class Intern : public Employee {
+public:
+    Intern(int id,string name,double salary)
+        :Employee(id,name,salary){}
+
+    double CalculateSalary()const override {
+        return salary;
+    }
+
+    void Show()const override {
+        cout<<"[Intern] "<<id<<" "<<name
+            <<" Salary:"<<CalculateSalary()<<endl;
+    }
+
+    string GetDepartment()const override {
+        return "Intern";
+    }
+};
+
+class Company {
+    vector<Employee*> workers;
+
+public:
+    void Add(Employee* e){
+        workers.push_back(e);
+    }
+
+    void ShowAll()const{
+        for(auto w:workers) w->Show();
+    }
+
+    void PayAll()const{
+        cout<<"--- Salaries ---\n";
+        for(auto w:workers)
+            cout<<w->GetId()<<" -> "<<w->CalculateSalary()<<endl;
+    }
+
+    void SortBySalary(){
+        sort(workers.begin(),workers.end(),
+            [](Employee* a,Employee* b){
+                return a->CalculateSalary()<b->CalculateSalary();
+            });
+    }
+
+    void RemoveById(int id){
+        for(auto it=workers.begin();it!=workers.end();++it){
+            if((*it)->GetId()==id){
+                delete *it;
+                workers.erase(it);
+                break;
+            }
+        }
+    }
+
+    ~Company(){
+        for(auto w:workers) delete w;
+    }
+};
+
+int main(){
+    Company c;
+
+    c.Add(new Developer(1,"Ali",1000,"C++"));
+    c.Add(new Manager(2,"Veli",2000,5));
+    c.Add(new Intern(3,"Murad",500));
+
+    c.ShowAll();
+    cout<<endl;
+
+    c.PayAll();
+}
