@@ -1,0 +1,206 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <cmath>
+#include <limits>
+
+using namespace std;
+
+class Payment {
+protected:
+    double amount;
+
+public:
+    Payment(double a) : amount(a) {}
+
+    virtual void Pay() = 0;
+    virtual void Show() const = 0;
+
+    virtual ~Payment() {} // VACIB
+};
+
+// ================== CARD ==================
+class CardPayment : public Payment {
+    string cardNumber;
+    string bankName;
+
+public:
+    CardPayment(double a, string card, string bank)
+        : Payment(a), cardNumber(card), bankName(bank) {}
+
+    void Pay() override {
+        cout << bankName << " banki vasitəsilə kartla "
+             << amount << " AZN ödənildi.\n";
+    }
+
+    void Show() const override {
+        cout << "[KART] " << bankName
+             << " | Kart: " << cardNumber
+             << " | Məbləğ: " << amount << " AZN\n";
+    }
+};
+
+// ================== CASH ==================
+class CashPayment : public Payment {
+    string receiver;
+
+public:
+    CashPayment(double a, string r)
+        : Payment(a), receiver(r) {}
+
+    void Pay() override {
+        cout << receiver << " şəxsə "
+             << amount << " AZN nağd verildi.\n";
+    }
+
+    void Show() const override {
+        cout << "[NAĞD] Alıcı: " << receiver
+             << " | Məbləğ: " << amount << " AZN\n";
+    }
+};
+
+// ================== CRYPTO ==================
+class CryptoPayment : public Payment {
+    string wallet;
+    string coin;
+
+public:
+    CryptoPayment(double a, string w, string c)
+        : Payment(a), wallet(w), coin(c) {}
+
+    void Pay() override {
+        cout << coin << " ilə "
+             << wallet << " walletinə "
+             << amount << " köçürüldü.\n";
+    }
+
+    void Show() const override {
+        cout << "[KRIPTO] " << coin
+             << " | Wallet: " << wallet
+             << " | Məbləğ: " << amount << "\n";
+    }
+};
+
+// ================== SYSTEM ==================
+class PaymentSystem {
+    vector<Payment*> payments;
+
+public:
+
+    void AddPayment(Payment* p) {
+        payments.push_back(p);
+    }
+
+    void ProcessAllPayments() {
+        if (payments.empty()) {
+            cout << "Heç bir ödəniş yoxdur!\n";
+            return;
+        }
+
+        cout << "\n--- Odenisler icra olunur ---\n";
+        for (auto p : payments)
+            p->Pay();
+    }
+
+    void ShowAllPayments() const {
+        if (payments.empty()) {
+            cout << "Siyahi bosdur!\n";
+            return;
+        }
+
+        cout << "\n--- Odenis Siyahisi ---\n";
+        for (auto p : payments)
+            p->Show();
+    }
+
+    void Clear() {
+        for (auto p : payments)
+            delete p;
+        payments.clear();
+    }
+
+    ~PaymentSystem() {
+        Clear();
+    }
+};
+
+// ================== MAIN ==================
+int main() {
+
+    PaymentSystem system;
+    int choice;
+
+    do {
+        cout << "\n===== PAYMENT SYSTEM =====\n";
+        cout << "1. Kart odenisi\n";
+        cout << "2. Nagd odenisi\n";
+        cout << "3. Kripto odenisi\n";
+        cout << "4. Butun odenisleri icra et\n";
+        cout << "5. Hamisini goster\n";
+        cout << "0. Cixis\n";
+        cout << "Secim: ";
+        cin >> choice;
+
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+        if (choice == 1) {
+            double amount;
+            string card, bank;
+
+            cout << "Mebleg: ";
+            cin >> amount;
+            cin.ignore();
+
+            cout << "Kart nomresi: ";
+            getline(cin, card);
+
+            cout << "Bank adi: ";
+            getline(cin, bank);
+
+            system.AddPayment(new CardPayment(amount, card, bank));
+        }
+
+        else if (choice == 2) {
+            double amount;
+            string receiver;
+
+            cout << "Mebleg: ";
+            cin >> amount;
+            cin.ignore();
+
+            cout << "Alan sexs: ";
+            getline(cin, receiver);
+
+            system.AddPayment(new CashPayment(amount, receiver));
+        }
+
+        else if (choice == 3) {
+            double amount;
+            string wallet, coin;
+
+            cout << "Mebleg: ";
+            cin >> amount;
+            cin.ignore();
+
+            cout << "Wallet: ";
+            getline(cin, wallet);
+
+            cout << "Coin (BTC/ETH): ";
+            getline(cin, coin);
+
+            system.AddPayment(new CryptoPayment(amount, wallet, coin));
+        }
+
+        else if (choice == 4) {
+            system.ProcessAllPayments();
+        }
+
+        else if (choice == 5) {
+            system.ShowAllPayments();
+        }
+
+    } while (choice != 0);
+
+    cout << "Program bitdi.\n";
+    return 0;
+}
