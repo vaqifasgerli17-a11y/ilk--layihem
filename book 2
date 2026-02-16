@@ -1,0 +1,226 @@
+#include<iostream>
+#include<vector>
+#include<string>
+#include<algorithm>
+#include<limits>
+#include<cmath>
+#include<fstream>
+#include<iomanip>
+
+using namespace std;
+
+class Book {
+
+private:
+    string title;
+    string author;
+    int pages;
+    int isbn;
+
+public:
+    Book(string title = "", string author = "", int pages = 0, int isbn = 0) {
+        this->title = title;
+        this->author = author;
+        this->pages = pages;
+        this->isbn = isbn;
+    }
+
+    int getPages() const {
+        return pages;
+    }
+
+    int getIsbn() const {
+        return isbn;
+    }
+
+    string getTitle() const {
+        return title;
+    }
+
+    string getAuthor() const {
+        return author;
+    }
+
+    void MelumatAl() {
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+        cout << "Kitabin adini yazin: ";
+        getline(cin, title);
+
+        cout << "Muellifin adini yazin: ";
+        getline(cin, author);
+
+        cout << "Kitabin sehifesi: ";
+        cin >> pages;
+
+        cout << "Kitabin ISBN nomresi: ";
+        cin >> isbn;
+    }
+
+    void MelumatGoster() const {
+        cout << left << setw(15) << title
+             << setw(15) << author
+             << setw(10) << pages
+             << setw(10) << isbn << endl;
+    }
+
+    void FaylaYaz(ofstream& file) const {
+        file << title << endl;
+        file << author << endl;
+        file << pages << endl;
+        file << isbn << endl;
+    }
+
+    bool FayldanOxu(ifstream& file) {
+        if (!getline(file, title)) return false;
+        if (!getline(file, author)) return false;
+        if (!(file >> pages >> isbn)) return false;
+        file.ignore(numeric_limits<streamsize>::max(), '\n');
+        return true;
+    }
+};
+
+class Library {
+
+private:
+    vector<Book> books;
+
+public:
+    void kitabElaveEt(const Book& b) {
+        books.push_back(b);
+    }
+
+    void kitabSil(int isbn) {
+        auto it = remove_if(books.begin(), books.end(),
+            [isbn](const Book& b) {
+                return b.getIsbn() == isbn;
+            });
+
+        if (it != books.end()) {
+            books.erase(it, books.end());
+            cout << "Kitab silindi\n";
+        }
+        else
+            cout << "Kitab tapilmadi\n";
+    }
+
+    void ButunKitablariGoster() const {
+        cout << left << setw(15) << "Title"
+             << setw(15) << "Author"
+             << setw(10) << "Pages"
+             << setw(10) << "ISBN" << endl;
+
+        cout << "----------------------------------------\n";
+
+        for (const auto& b : books)
+            b.MelumatGoster();
+    }
+
+    void KitabAxtar(int isbn) const {
+        bool found = false;
+
+        for (const auto& b : books) {
+            if (b.getIsbn() == isbn) {
+                b.MelumatGoster();
+                found = true;
+                break;
+            }
+        }
+
+        if (!found)
+            cout << "Kitab tapilmadi\n";
+    }
+
+    void FaylaYaz(const string& filename) const {
+        ofstream file(filename);
+        for (const auto& b : books)
+            b.FaylaYaz(file);
+
+        cout << "Fayla yazildi\n";
+    }
+
+    void FayldanOxu(const string& filename) {
+        ifstream file(filename);
+        if (!file) {
+            cout << "Fayil tapilmadi\n";
+            return;
+        }
+
+        books.clear();
+        Book temp;
+
+        while (temp.FayldanOxu(file))
+            books.push_back(temp);
+
+        cout << "Fayldan oxundu\n";
+    }
+};
+
+int main() {
+
+    Library l;
+    l.FayldanOxu("kitablar.txt");
+
+    int secim;
+
+    do {
+        cout << "\n===== KITABXANA =====\n";
+        cout << "1. Kitab elave et\n";
+        cout << "2. Kitab sil\n";
+        cout << "3. Kitablari goster\n";
+        cout << "4. Kitab axtar\n";
+        cout << "5. Fayla yaz\n";
+        cout << "6. Fayldan oxu\n";
+        cout << "0. Cixis\n";
+        cout << "Secim: ";
+        cin >> secim;
+
+        switch (secim) {
+
+        case 1: {
+            Book b;
+            b.MelumatAl();
+            l.kitabElaveEt(b);
+            break;
+        }
+
+        case 2: {
+            int isbn;
+            cout << "ISBN daxil edin: ";
+            cin >> isbn;
+            l.kitabSil(isbn);
+            break;
+        }
+
+        case 3:
+            l.ButunKitablariGoster();
+            break;
+
+        case 4: {
+            int isbn;
+            cout << "ISBN daxil edin: ";
+            cin >> isbn;
+            l.KitabAxtar(isbn);
+            break;
+        }
+
+        case 5:
+            l.FaylaYaz("kitablar.txt");
+            break;
+
+        case 6:
+            l.FayldanOxu("kitablar.txt");
+            break;
+
+        case 0:
+            cout << "Program baglandi...\n";
+            break;
+
+        default:
+            cout << "Yanlis secim!\n";
+        }
+
+    } while (secim != 0);
+
+    return 0;
+}
