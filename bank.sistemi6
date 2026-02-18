@@ -1,0 +1,182 @@
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <iomanip>
+#include <vector>
+#include <limits>
+
+using namespace std;
+
+// ====================== KART SINIFI ======================
+class Kart {
+private:
+    string kartNomresi;
+    int PIN;
+    string sahibAdi;
+    double balans;
+
+public:
+    Kart(string kartNomresi = "", int PIN = 0, string sahibAdi = "", double balans = 0) {
+        this->kartNomresi = kartNomresi;
+        this->PIN = PIN;
+        this->sahibAdi = sahibAdi;
+        this->balans = balans;
+    }
+
+    string getKartNomresi() { return kartNomresi; }
+    int getPIN() { return PIN; }
+    double getBalans() { return balans; }
+
+    void melumatAl() {
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        cout << "Kart sahibinin adini daxil edin: ";
+        getline(cin, sahibAdi);
+        cout << "Kart nomresini daxil edin (16 reqem): ";
+        cin >> kartNomresi;
+        cout << "PIN daxil edin: ";
+        cin >> PIN;
+        cout << "Balans daxil edin: ";
+        cin >> balans;
+    }
+
+    void gosterMelumatlari() {
+        cout << "Kart sahibinin adi: " << left << setw(20) << sahibAdi
+            << "Kart nomresi: " << setw(20) << kartNomresi
+            << "PIN: " << setw(6) << PIN
+            << "Balans: " << balans << " AZN\n";
+    }
+
+    void pulArtir(double mebleg) {
+        if (mebleg > 0)
+            balans += mebleg;
+        else
+            cout << "Mebleg musbet olmalidir!\n";
+    }
+
+    void pulAzalt(double mebleg) {
+        if (mebleg <= 0)
+            cout << "Mebleg musbet olmalidir!\n";
+        else if (mebleg > balans)
+            cout << "Kifayet qeder vesait yoxdur!\n";
+        else
+            balans -= mebleg;
+    }
+
+    void faylaYaz(ofstream& file) {
+        file << kartNomresi << endl;
+        file << sahibAdi << endl;
+        file << PIN << endl;
+        file << balans << endl;
+    }
+
+    void fayldanOxu(ifstream& file) {
+        getline(file, kartNomresi);
+        getline(file, sahibAdi);
+        file >> PIN;
+        file >> balans;
+        file.ignore(numeric_limits<streamsize>::max(), '\n');
+    }
+};
+
+// ====================== BANK SINIFI ======================
+class Bank {
+private:
+    vector<Kart> kartlar;
+
+public:
+    void kartElaveEt() {
+        Kart k;
+        k.melumatAl();
+        kartlar.push_back(k);
+    }
+
+    void gosterKartlar() {
+        if (kartlar.empty()) {
+            cout << "Hele kart yoxdur.\n";
+            return;
+        }
+        for (auto& k : kartlar)
+            k.gosterMelumatlari();
+    }
+
+    void showBalance(string nomre, int pin) {
+        for (auto& k : kartlar) {
+            if (k.getKartNomresi() == nomre && k.getPIN() == pin) {
+                cout << "Balansiniz: " << k.getBalans() << " AZN\n";
+                return;
+            }
+        }
+        cout << "Kart tapilmadi veya PIN sehvdir.\n";
+    }
+
+    void faylaYaz(const string& filename) {
+        ofstream file(filename);
+        for (auto& k : kartlar)
+            k.faylaYaz(file);
+        cout << "Fayla yazildi.\n";
+    }
+
+    void fayldanOxu(const string& filename) {
+        ifstream file(filename);
+        if (!file) {
+            cout << "Fayl acilamadi.\n";
+            return;
+        }
+        kartlar.clear();
+        while (!file.eof()) {
+            Kart k;
+            k.fayldanOxu(file);
+            if (k.getKartNomresi() != "")
+                kartlar.push_back(k);
+        }
+        cout << "Fayldan oxundu.\n";
+    }
+};
+
+// ====================== MAIN ======================
+int main() {
+    Bank bank;
+    int secim;
+    do {
+        cout << "\n==== BANK SISTEMI ====\n";
+        cout << "1. Kart elave et\n";
+        cout << "2. Kartlari goster\n";
+        cout << "3. Balansi goster\n";
+        cout << "4. Fayla yaz\n";
+        cout << "5. Fayldan oxu\n";
+        cout << "0. Cix\n";
+        cout << "Secim: ";
+        cin >> secim;
+
+        switch (secim) {
+        case 1:
+            bank.kartElaveEt();
+            break;
+        case 2:
+            bank.gosterKartlar();
+            break;
+        case 3: {
+            string nomre; int pin;
+            cout << "Kart nomresini daxil edin: ";
+            cin >> nomre;
+            cout << "PIN daxil edin: ";
+            cin >> pin;
+            bank.showBalance(nomre, pin);
+            break;
+        }
+        case 4:
+            bank.faylaYaz("kartlar.txt");
+            break;
+        case 5:
+            bank.fayldanOxu("kartlar.txt");
+            break;
+        case 0:
+            cout << "Cixilir...\n";
+            break;
+        default:
+            cout << "Sehv secim!\n";
+        }
+    } while (secim != 0);
+
+    return 0;
+}
