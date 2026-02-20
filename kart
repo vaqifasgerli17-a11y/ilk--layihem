@@ -1,0 +1,235 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <fstream>
+#include <limits>
+
+using namespace std;
+
+class Kart {
+private:
+    string kartNomresi;
+    string sahib;
+    int pin;
+    double balans;
+    bool blok;
+    int sehvCehd;
+
+public:
+    Kart() {
+        balans = 0;
+        blok = false;
+        sehvCehd = 0;
+    }
+
+    // ===== KART ELAVE =====
+    void elaveEt() {
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+        cout << "Ad Soyad: ";
+        getline(cin, sahib);
+
+        do {
+            cout << "Kart nomresi (16 reqem): ";
+            cin >> kartNomresi;
+        } while (kartNomresi.length() != 16);
+
+        do {
+            cout << "PIN (4 reqem): ";
+            cin >> pin;
+        } while (pin < 1000 || pin > 9999);
+
+        cout << "Baslangic balans: ";
+        cin >> balans;
+
+        blok = false;
+        sehvCehd = 0;
+    }
+
+    string getNomre() { return kartNomresi; }
+
+    bool pinYoxla(int daxilPin) {
+        if (blok) {
+            cout << "Kart bloklanib!\n";
+            return false;
+        }
+
+        if (daxilPin == pin) {
+            sehvCehd = 0;
+            return true;
+        }
+
+        sehvCehd++;
+        cout << "Sehv PIN!\n";
+
+        if (sehvCehd >= 3) {
+            blok = true;
+            cout << "Kart bloklandi!\n";
+        }
+        return false;
+    }
+
+    void balansGoster() {
+        cout << "Balans: " << balans << " AZN\n";
+    }
+
+    void pulArtir(double m) {
+        if (m > 0) {
+            balans += m;
+            cout << "Pul artirildi.\n";
+        }
+    }
+
+    void pulCixar(double m) {
+        if (m > balans) {
+            cout << "Kifayet qeder vesait yoxdur!\n";
+            return;
+        }
+        if (m > 0) {
+            balans -= m;
+            cout << "Pul cixarildi.\n";
+        }
+    }
+
+    // ===== FAYLA YAZ =====
+    void faylaYaz(ofstream &f) {
+        f << kartNomresi << endl;
+        f << sahib << endl;
+        f << pin << endl;
+        f << balans << endl;
+        f << blok << endl;
+    }
+
+    // ===== FAYLDAN OXU =====
+    void fayldanOxu(ifstream &f) {
+        getline(f, kartNomresi);
+        getline(f, sahib);
+        f >> pin;
+        f >> balans;
+        f >> blok;
+        f.ignore(numeric_limits<streamsize>::max(), '\n');
+        sehvCehd = 0;
+    }
+};
+
+class Bank {
+private:
+    vector<Kart> kartlar;
+
+public:
+    void kartElave() {
+        Kart k;
+        k.elaveEt();
+        kartlar.push_back(k);
+    }
+
+    Kart* kartTap(string nomre) {
+        for (auto &k : kartlar)
+            if (k.getNomre() == nomre)
+                return &k;
+        return nullptr;
+    }
+
+    void balansMenu() {
+        string nomre;
+        int pin;
+
+        cout << "Kart nomresi: ";
+        cin >> nomre;
+
+        Kart* k = kartTap(nomre);
+        if (!k) {
+            cout << "Kart tapilmadi!\n";
+            return;
+        }
+
+        cout << "PIN: ";
+        cin >> pin;
+
+        if (!k->pinYoxla(pin))
+            return;
+
+        int secim;
+        do {
+            cout << "\n1. Balans goster\n";
+            cout << "2. Pul artir\n";
+            cout << "3. Pul cixar\n";
+            cout << "0. Cix\n";
+            cout << "Secim: ";
+            cin >> secim;
+
+            double mebleg;
+
+            switch(secim) {
+                case 1:
+                    k->balansGoster();
+                    break;
+                case 2:
+                    cout << "Mebleg: ";
+                    cin >> mebleg;
+                    k->pulArtir(mebleg);
+                    break;
+                case 3:
+                    cout << "Mebleg: ";
+                    cin >> mebleg;
+                    k->pulCixar(mebleg);
+                    break;
+            }
+
+        } while (secim != 0);
+    }
+
+    void faylaYaz() {
+        ofstream f("kartlar.txt");
+        for (auto &k : kartlar)
+            k.faylaYaz(f);
+        cout << "Fayla yazildi.\n";
+    }
+
+    void fayldanOxu() {
+        ifstream f("kartlar.txt");
+        if (!f) {
+            cout << "Fayl tapilmadi.\n";
+            return;
+        }
+
+        kartlar.clear();
+
+        while (!f.eof()) {
+            Kart k;
+            k.fayldanOxu(f);
+            if (k.getNomre() != "")
+                kartlar.push_back(k);
+        }
+
+        cout << "Fayldan oxundu.\n";
+    }
+};
+
+int main() {
+    Bank bank;
+    int secim;
+
+    do {
+        cout << "\n===== BANK SISTEMI =====\n";
+        cout << "1. Kart elave et\n";
+        cout << "2. ATM (Balans/Pul)\n";
+        cout << "3. Fayla yaz\n";
+        cout << "4. Fayldan oxu\n";
+        cout << "0. Cix\n";
+        cout << "Secim: ";
+        cin >> secim;
+
+        switch(secim) {
+            case 1: bank.kartElave(); break;
+            case 2: bank.balansMenu(); break;
+            case 3: bank.faylaYaz(); break;
+            case 4: bank.fayldanOxu(); break;
+            case 0: cout << "Cixilir...\n"; break;
+            default: cout << "Sehv secim!\n";
+        }
+
+    } while (secim != 0);
+
+    return 0;
+}
