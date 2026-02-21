@@ -1,0 +1,96 @@
+#include <iostream>
+#include <stack>
+#include <string>
+#include <cctype>
+using namespace std;
+
+int oncelik(char op) {
+    if (op == '+' || op == '-') return 1;
+    if (op == '*' || op == '/') return 2;
+    return 0;
+}
+
+double emeliyyat(double a, double b, char op) {
+    switch (op) {
+    case '+': return a + b;
+    case '-': return a - b;
+    case '*': return a * b;
+    case '/':
+        if (b == 0) {
+            cout << "Sifira bolme olmaz!" << endl;
+            exit(1);
+        }
+        return a / b;
+    }
+    return 0;
+}
+
+int main() {
+
+    string ifade;
+    cout << "Ifadeni daxil edin: ";
+    getline(cin, ifade);
+
+    stack<double> ededler;
+    stack<char> isareler;
+
+    for (int i = 0; i < ifade.length(); i++) {
+
+        if (isspace(ifade[i])) continue;
+
+        // 🔥 ƏDƏD OXUMA (onluq daxil)
+        if (isdigit(ifade[i]) || ifade[i] == '.') {
+
+            string reqem = "";
+
+            while (i < ifade.length() &&
+                (isdigit(ifade[i]) || ifade[i] == '.')) {
+
+                reqem += ifade[i];
+                i++;
+            }
+
+            ededler.push(stod(reqem));
+            i--;
+        }
+
+        else if (ifade[i] == '(') {
+            isareler.push(ifade[i]);
+        }
+
+        else if (ifade[i] == ')') {
+            while (!isareler.empty() && isareler.top() != '(') {
+                double b = ededler.top(); ededler.pop();
+                double a = ededler.top(); ededler.pop();
+                char op = isareler.top(); isareler.pop();
+                ededler.push(emeliyyat(a, b, op));
+            }
+            isareler.pop();
+        }
+
+        else { // operator
+
+            while (!isareler.empty() &&
+                oncelik(isareler.top()) >= oncelik(ifade[i])) {
+
+                double b = ededler.top(); ededler.pop();
+                double a = ededler.top(); ededler.pop();
+                char op = isareler.top(); isareler.pop();
+                ededler.push(emeliyyat(a, b, op));
+            }
+
+            isareler.push(ifade[i]);
+        }
+    }
+
+    while (!isareler.empty()) {
+        double b = ededler.top(); ededler.pop();
+        double a = ededler.top(); ededler.pop();
+        char op = isareler.top(); isareler.pop();
+        ededler.push(emeliyyat(a, b, op));
+    }
+
+    cout << "Netice: " << ededler.top() << endl;
+
+    return 0;
+}
