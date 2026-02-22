@@ -1,0 +1,144 @@
+#include<iostream>
+#include<string>
+#include<fstream>
+#include<iomanip>
+#include<vector>
+#include<algorithm>
+#include<limits>
+
+using namespace std;
+
+class Product {
+private:
+	string ad;
+	double qiymet;
+	int stok;
+
+public:
+	Product(string ad = "", double qiymet = 0, int stok = 0) {
+
+		this->ad = ad;
+		this->qiymet = qiymet;
+		this->stok = stok;
+
+	}
+	string getAd() { return ad; }
+	int getStok() { return stok; }
+	double getQiymet() { return qiymet; }
+
+	void MelumatAL() {
+		cin.ignore(numeric_limits<streamsize>::max(), '\n');
+		cout << "mehsul adi:" << endl;
+		getline(cin, ad);
+		cout << "mehsulun qiymeti:" << endl;
+		cin >> qiymet;
+		cout << "stok:" << endl;
+		cin >> stok;
+	}
+
+	void Goster() {
+		cout << "ADI:" << left << setw(20) << ad << endl;
+		cout << "qiymeti:" << left << setw(20) << qiymet << endl;
+		cout << "stok" << left << setw(20) << stok << endl;
+	}
+
+
+	bool stokdancixar(int say) 
+	{
+		if (say <= 0) {
+			cout << "mehsul sayini qirin" << endl;
+			return false;
+		}
+		if (say>stok)
+		{
+			cout << "kifayet qeder mehsul yoxdur" << endl;
+			return false;
+		}
+
+		
+		stok -= say;
+			return true;
+
+	}
+
+};
+
+class Shop
+{
+private:
+	vector<Product>products;
+
+public:
+	void MehsulElaveet() {
+		Product yeni;
+		yeni.MelumatAL();
+		products.push_back(yeni);
+		cout << "hehsul eleve edildi" << endl;
+	}
+
+	void MehsulGoster() {
+		for (auto& p : products) {
+			p.Goster();
+		}
+	}
+	bool MehsulAl(string mehsulAdi, int say) {
+		for (auto& p : products) {
+			if (p.getAd() == mehsulAdi) {
+				if (p.stokdancixar(say)) {
+					cout << "Alis ugurlu!" << endl;
+					return true;
+				}
+				else {
+					cout << "Stok kifayet deyil!" << endl;
+					return false;
+				}
+			}
+		}
+		cout << "Mehsul tapilmadi!" << endl;
+		return false;
+	}
+	void Islet() {
+		int secim;
+		
+		do
+		{
+			cout << "1.Mehsul elave et \n 2.mehsullari goster \n  3.mehsul al \n 0.cix \n";
+			cin >> secim;
+			switch (secim)
+			{
+			case 1:
+				MehsulElaveet();
+				break;
+			case 2:
+				MehsulGoster();
+				break;
+			case 3: {
+				string ad;
+				int say;
+				cin.ignore(numeric_limits<streamsize>::max(), '\n');
+				cout << "almaq istediyiniz mehsul adi:";
+				getline(cin, ad);
+				cout << "nece eded:";
+				cin >> say;
+				MehsulAl(ad, say);
+				break;
+			}
+			case 0:
+				cout << "cixis edildi." << endl;
+				break;
+			default:
+				cout << "sehv secim" << endl;
+				break;
+	   	    }
+
+		} while (secim!=0);
+
+	}
+};
+
+int main() {
+	Shop  shops;
+	shops.Islet();
+
+	return 0;
+};
