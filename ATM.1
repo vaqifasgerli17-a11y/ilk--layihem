@@ -1,0 +1,228 @@
+#include<iostream>
+#include<string>
+#include<fstream>
+#include<limits>
+#include<vector>
+#include<iomanip>     
+
+using namespace std;
+
+class User {
+private:
+    string ad;
+    string kartnomresi;
+    int pin;
+    double balans;
+    bool blok;
+    int sehvCehd;
+    
+    public :
+        User(string ad="",string kartnomresi="",int pin=0,double balans=0,bool blok=false ,int sehvCehd=0)
+        {
+            this->ad = ad;
+            this->balans = balans;
+            this->kartnomresi = kartnomresi;
+            this->pin = pin;
+            this->blok = blok;
+            this->sehvCehd = sehvCehd;
+        }
+        vector<string> history;
+        string getKartNomresi() {
+            return kartnomresi;
+        }
+
+        double getBalans() { return balans; }
+
+        void MelumatAl() {
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "istifadeci adini yain:" << endl;
+            getline(cin, ad);
+            do {
+                cout << "kartin nomresi(16 reqem):" << endl;
+                getline(cin, kartnomresi);
+
+            } while (kartnomresi.length() != 16);
+            do {
+                cout << "pini daxil edin(4 reqem)" << endl;
+                cin >> pin;
+            } while (pin < 1000 || pin>9999);
+
+            cout << " kartdaki balans:" << endl;
+            cin >> balans;
+        }
+
+        void Goster() {
+            cout << "istifadeci adi:" << left << setw(20) << ad << endl;
+            cout << "kart nomresi:" << left << setw(20) << kartnomresi << endl;
+            cout << "balans:" << left << setw(22) << balans << endl;
+        }
+
+        void PulArtir(double mebleg) {
+            if (mebleg>0)
+            {
+            
+                balans += mebleg;
+                history.push_back("+" + to_string(mebleg) + " AZN əlavə edildi");
+            }
+            else {
+                cout << "mebleg musbet olmalidir:";
+            }
+        }
+
+        bool PuluAzalt(double mebleg) {
+
+            if (mebleg<=0)
+            {
+                cout << "xeta:mebleg musbet olmalidir!" << endl;
+                return false;
+            }
+            if (mebleg>balans)
+            {
+                cout << "xeta:kifayet qeder deyil: "<<endl;
+                return false;
+
+            }
+            balans -= mebleg;
+            history.push_back("-" + to_string(mebleg) + " AZN çıxarıldı");
+            return true;
+
+        }
+
+        void Tatix() {
+            for (int i = 0; i < history.size(); i++) {
+                cout << history[i] << endl;
+            }
+        }
+
+        bool pinYoxla(int daxilPin) {
+            if (blok) {
+                cout << "kart bloklandi:";
+                    return false;
+            }
+            if (daxilPin==pin) {
+                sehvCehd = 0;
+                return true;
+            }
+            sehvCehd++;
+            cout << "sehv pin!" << endl;
+            if (sehvCehd>=3)
+            {
+                blok = true;
+                cout << "blokland";
+
+            }
+            return false;
+        }
+
+        void FaylaYaz(ofstream& file) {
+            file << ad << endl;
+            file << kartnomresi << endl;
+            file << pin << endl;
+            file << balans << endl;
+        }
+
+        void FayldanOxu(ifstream& file) {
+            getline(file, ad);
+            getline(file, kartnomresi);
+            file >> pin;
+            file >> balans;
+            file.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+
+};
+
+class Bank {
+private:
+    vector<User> users;
+
+public:
+   
+    
+    void Qeydiyyat() {
+        User yeni;
+        yeni.MelumatAl();
+        users.push_back(yeni);
+        cout << "istifadeci yaradildi!" << endl;
+    }
+
+   
+        User* Login()
+        {
+            string kart;
+            int pin;
+            cout << "Kart nomresini daxil edin: ";
+            cin >> kart;
+
+            for (int i = 0; i < users.size(); i++) {
+                if (users[i].getKartNomresi() == kart) {  // getter istifadə olunur
+                    cout << "PIN daxil edin: ";
+                    cin >> pin;
+                    if (users[i].pinYoxla(pin)) {
+                        cout << "Xos geldiz!" << endl;
+                        return &users[i];
+                    }
+                    else {
+                        return nullptr;
+                    }
+                }
+            }
+
+            cout << "Kart tapilmadi!" << endl;
+            return nullptr;
+        }
+    
+    void Menu(User* user) {
+        if (!user) return;
+        int secim;
+        do {
+            cout << "1. Pul Artir\n 2. Pul Cixar\n 3. Tarixce\n 4.balans goster\n 0. Cix\nSecim: ";
+            cin >> secim;
+            switch (secim) {
+            case 1: {
+                double m; cout << "Mebleg: "; cin >> m;
+                user->PulArtir(m);
+                break;
+            }
+            case 2: {
+                double m; cout << "Mebleg: "; cin >> m;
+                if (!user->PuluAzalt(m)) cout << "Emeliyyat ugursuz oldu\n";
+                break;
+            }
+            case 3:
+                user->Tatix();
+                break;
+
+            case 4: {
+                cout << "Balansınız: " << user->getBalans() << " AZN" << endl;
+                break;
+            }
+        }
+        } while (secim != 0);
+    }
+
+    void Islet() {
+        int secim;
+        do {
+            cout << "1. Qeydiyyat\n2. Login\n0. Cix\nSecim: ";
+            cin >> secim;
+            switch (secim) {
+            case 1:
+                Qeydiyyat();
+                break;
+            case 2: {
+                User* u = Login();
+                Menu(u);
+                break;
+            }
+            }
+        } while (secim != 0);
+    }
+};
+
+int main() {
+
+    Bank myBank;
+    myBank.Islet();
+
+    return 0;
+};
